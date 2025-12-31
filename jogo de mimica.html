@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mímica Master Voice 300</title>
+    <style>
+        :root { --primary: #38bdf8; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .screen { width: 95%; max-width: 420px; background: var(--card); padding: 25px; border-radius: 24px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .hidden { display: none !important; }
+        .input-group { margin: 15px 0; text-align: left; }
+        input { width: 100%; padding: 12px; border-radius: 10px; border: none; margin-top: 5px; background: #334155; color: white; font-size: 1rem; }
+        .scoreboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 8px; margin-bottom: 15px; }
+        .team-box { background: #334155; padding: 8px; border-radius: 12px; font-size: 0.75rem; transition: 0.3s; border: 2px solid transparent; }
+        .team-box.active { border-color: var(--primary); background: rgba(56, 189, 248, 0.2); transform: scale(1.05); }
+        .timer-display { font-size: 3.5rem; font-weight: 900; color: #f43f5e; margin: 10px 0; }
+        .card { background: #f8fafc; color: #1e293b; min-height: 180px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 8px 0 #cbd5e1; border: 2px solid #38bdf8;}
+        .cat-badge { background: #38bdf8; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; color: #0f172a; margin-bottom: 10px; text-transform: uppercase; }
+        .word-text { font-size: 1.8rem; font-weight: 800; text-transform: uppercase; padding: 0 15px; text-align: center; line-height: 1.1; }
+        .points-badge { margin-top: 10px; color: white; font-weight: bold; background: #0f172a; padding: 4px 12px; border-radius: 10px; font-size: 0.9rem; }
+        .btn { border: none; border-radius: 16px; padding: 18px; font-size: 1.1rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; margin-top: 10px; }
+        .btn-blue { background: var(--primary); color: #0f172a; }
+        .btn-green { background: #22c55e; color: white; }
+        .btn-red { background: #ef4444; color: white; }
+        .action-row { display: flex; gap: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="setup-screen" class="screen">
+        <h2 style="color: var(--primary)">MÍMICA MASTER 300</h2>
+        <div class="input-group">
+            <label>Nº de Equipes (2-4):</label>
+            <input type="number" id="qtyTeams" value="2" min="2" max="4" onchange="generateInputs()">
+        </div>
+        <div id="team-names-container"></div>
+        <div class="input-group">
+            <label>Tempo (seg):</label>
+            <input type="number" id="gameTime" value="60">
+        </div>
+        <button class="btn btn-blue" onclick="startGame()">COMEÇAR</button>
+    </div>
+
+    <div id="game-screen" class="screen hidden">
+        <div id="ranking" style="font-size: 0.7rem; color: #94a3b8; margin-bottom: 8px; font-weight: bold;"></div>
+        <div class="scoreboard" id="scoreboard"></div>
+        <div class="timer-display" id="timer">00</div>
+
+        <div class="card">
+            <div id="cat-display" class="cat-badge">CATEGORIA</div>
+            <div id="word-display" class="word-text">PRONTO?</div>
+            <div id="points-display" class="points-badge" style="visibility: hidden;">0 PONTOS</div>
+        </div>
+
+        <div id="controls">
+            <button id="btn-draw" class="btn btn-blue" onclick="drawWord()">SORTEAR PALAVRA</button>
+            <button id="btn-start-timer" class="btn btn-green hidden" onclick="startCountdown()">INICIAR MÍMICA</button>
+            <div id="game-actions" class="action-row hidden">
+                <button class="btn btn-green" onclick="resolveTurn(true)">ACERTOU</button>
+                <button class="btn btn-red" onclick="resolveTurn(false)">ERROU</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const database = {
+            "Ações": [
+                {p:1,w:"Dormir"},{p:1,w:"Correr"},{p:1,w:"Beber"},{p:1,w:"Chorar"},{p:1,w:"Rir"},{p:1,w:"Abraçar"},{p:1,w:"Pular"},{p:1,w:"Lavar Mãos"},{p:1,w:"Tossir"},{p:1,w:"Caminhar"},
+                {p:2,w:"Fritar Ovo"},{p:2,w:"Varrer"},{p:2,w:"Escovar Dentes"},{p:2,w:"Dirigir"},{p:2,w:"Pentear Cabelo"},{p:2,w:"Abrir Presente"},{p:2,w:"Lavar Louça"},{p:2,w:"Pedalar"},{p:2,w:"Ler Livro"},{p:2,w:"Chutar Bola"},
+                {p:3,w:"Tirar Selfie"},{p:3,w:"Pescar"},{p:3,w:"Jogar Boliche"},{p:3,w:"Assobiar"},{p:3,w:"Pintar Quadro"},{p:3,w:"Tocar Violão"},{p:3,w:"Maquiar"},{p:3,w:"Passar Ferro"},{p:3,w:"Digitar"},{p:3,w:"Amarrar Sapato"},
+                {p:4,w:"Lutar Boxe"},{p:4,w:"Yoga"},{p:4,w:"Trocar Lâmpada"},{p:4,w:"Andar Skate"},{p:4,w:"Costurar"},{p:4,w:"Cantar Ópera"},{p:4,w:"Fazer Mímica"},{p:4,w:"Escalar"},{p:4,w:"Pesagem"},{p:4,w:"Cortar Cebola"},
+                {p:5,w:"Surfar"},{p:5,w:"Trocar Fralda"},{p:5,w:"Desfilar"},{p:5,w:"Tocar Bateria"},{p:5,w:"Lavar Carro"},{p:5,w:"Cavalgar"},{p:5,w:"Mergulhar"},{p:5,w:"Esquiar"},{p:5,w:"Subir Corda"},{p:5,w:"Caçar Abelha"},
+                {p:6,w:"Pular Paraquedas"},{p:6,w:"Tricotar"},{p:6,w:"Corda Bamba"},{p:6,w:"Malabares"},{p:6,w:"Mágica"},{p:6,w:"Orquestra"},{p:6,w:"Tocar Gaita"},{p:6,w:"Esculpir"},{p:6,w:"Meditar"},{p:6,w:"Trocar Pneu"}
+            ],
+            "Profissões": [
+                {p:1,w:"Médico"},{p:1,w:"Professor"},{p:1,w:"Policial"},{p:1,w:"Cantor"},{p:1,w:"Pintor"},{p:1,w:"Juiz"},{p:1,w:"Porteiro"},{p:1,w:"Gari"},{p:1,w:"Atleta"},{p:1,w:"Modelo"},
+                {p:2,w:"Bombeiro"},{p:2,w:"Cozinheiro"},{p:2,w:"Dentista"},{p:2,w:"Carteiro"},{p:2,w:"Fotógrafo"},{p:2,w:"Cabeleireiro"},{p:2,w:"Pedreiro"},{p:2,w:"Faxineiro"},{p:2,w:"Vendedor"},{p:2,w:"Pescador"},
+                {p:3,w:"Bailarina"},{p:3,w:"Garçom"},{p:3,w:"Jornalista"},{p:3,w:"Segurança"},{p:3,w:"Bancário"},{p:3,w:"Motorista Ônibus"},{p:3,w:"Mecânico"},{p:3,w:"Encanador"},{p:3,w:"Jardineiro"},{p:3,w:"Padaria"},
+                {p:4,w:"Astronauta"},{p:4,w:"Cientista"},{p:4,w:"Veterinário"},{p:4,w:"Advogado"},{p:4,w:"Piloto"},{p:4,w:"Arquiteto"},{p:4,w:"Soldado"},{p:4,w:"Fazendeiro"},{p:4,w:"Bibliotecário"},{p:4,w:"Eletricista"},
+                {p:5,w:"Arqueólogo"},{p:5,w:"Mergulhador"},{p:5,w:"Programador"},{p:5,w:"Enfermeiro"},{p:5,w:"Estilista"},{p:5,w:"Decorador"},{p:5,w:"Psicólogo"},{p:5,w:"Geólogo"},{p:5,w:"Tradutor"},{p:5,w:"Escritor"},
+                {p:6,w:"Maestro"},{p:6,w:"Mineiro"},{p:6,w:"Detetive"},{p:6,w:"Coveiro"},{p:6,w:"Joalheiro"},{p:6,w:"Sapateiro"},{p:6,w:"Lenhador"},{p:6,w:"Cartunista"},{p:6,w:"Relojoeiro"},{p:6,w:"Acupunturista"}
+            ],
+            "Animais": [
+                {p:1,w:"Cachorro"},{p:1,w:"Gato"},{p:1,w:"Macaco"},{p:1,w:"Cobra"},{p:1,w:"Peixe"},{p:1,w:"Passarinho"},{p:1,w:"Vaca"},{p:1,w:"Porco"},{p:1,w:"Pato"},{p:1,w:"Rato"},
+                {p:2,w:"Leão"},{p:2,w:"Elefante"},{p:2,w:"Coelho"},{p:2,w:"Cavalo"},{p:2,w:"Sapo"},{p:2,w:"Galinha"},{p:2,w:"Ovelha"},{p:2,w:"Boi"},{p:2,w:"Galo"},{p:2,w:"Peru"},
+                {p:3,w:"Canguru"},{p:3,w:"Pinguim"},{p:3,w:"Jacaré"},{p:3,w:"Tubarão"},{p:3,w:"Tartaruga"},{p:3,w:"Aranha"},{p:3,w:"Urso"},{p:3,w:"Coruja"},{p:3,w:"Águia"},{p:3,w:"Borboleta"},
+                {p:4,w:"Girafa"},{p:4,w:"Morcego"},{p:4,w:"Formiga"},{p:4,w:"Baleia"},{p:4,w:"Zebra"},{p:4,w:"Lobo"},{p:4,w:"Tigre"},{p:4,w:"Abelha"},{p:4,w:"Rinoceronte"},{p:4,w:"Esquilo"},
+                {p:5,w:"Beija-flor"},{p:5,w:"Caranguejo"},{p:5,w:"Hipopótamo"},{p:5,w:"Camelo"},{p:5,w:"Escorpião"},{p:5,w:"Polvo"},{p:5,w:"Panda"},{p:5,w:"Grilo"},{p:5,w:"Pavão"},{p:5,w:"Hiena"},
+                {p:6,w:"Ornitorrinco"},{p:6,w:"Camaleão"},{p:6,w:"Preguiça"},{p:6,w:"Tamanduá"},{p:6,w:"Água-viva"},{p:6,w:"Louva-a-deus"},{p:6,w:"Koala"},{p:6,w:"Vaga-lume"},{p:6,w:"Peixe-bolha"},{p:6,w:"Dragão de Komodo"}
+            ],
+            "Objetos": [
+                {p:1,w:"Celular"},{p:1,w:"Caneta"},{p:1,w:"Chave"},{p:1,w:"Livro"},{p:1,w:"Relógio"},{p:1,w:"Copo"},{p:1,w:"Mesa"},{p:1,w:"Cama"},{p:1,w:"Sapato"},{p:1,w:"Chapéu"},
+                {p:2,w:"Bicicleta"},{p:2,w:"Óculos"},{p:2,w:"Tesoura"},{p:2,w:"Martelo"},{p:2,w:"Guarda-chuva"},{p:2,w:"Cadeira"},{p:2,w:"Garrafa"},{p:2,w:"Meia"},{p:2,w:"Escova"},{p:2,w:"Pente"},
+                {p:3,w:"Violão"},{p:3,w:"Câmera"},{p:3,w:"Mochila"},{p:3,w:"Ventilador"},{p:3,w:"Abajur"},{p:3,w:"Fone"},{p:3,w:"Espelho"},{p:3,w:"Travesseiro"},{p:3,w:"Toalha"},{p:3,w:"Sabonete"},
+                {p:4,w:"Lanterna"},{p:4,w:"Microfone"},{p:4,w:"Televisão"},{p:4,w:"Computador"},{p:4,w:"Skate"},{p:4,w:"Liquidificador"},{p:4,w:"Geladeira"},{p:4,w:"Fogão"},{p:4,w:"Cinto"},{p:4,w:"Anel"},
+                {p:5,w:"Anzol"},{p:5,w:"Dentadura"},{p:5,w:"Vaso"},{p:5,w:"Grampeador"},{p:5,w:"Vela"},{p:5,w:"Extintor"},{p:5,w:"Rede"},{p:5,w:"Batom"},{p:5,w:"Furadeira"},{p:5,w:"Alicate"},
+                {p:6,w:"Bússola"},{p:6,w:"Telescópio"},{p:6,w:"Ampulheta"},{p:6,w:"Sanfona"},{p:6,w:"Gramofone"},{p:6,w:"Periscópio"},{p:6,w:"Teodolito"},{p:6,w:"Xilofone"},{p:6,w:"Bodum"},{p:6,w:"Caleidoscópio"}
+            ],
+            "Famosos/Heróis": [
+                {p:1,w:"Mickey Mouse"},{p:1,w:"Batman"},{p:1,w:"Superman"},{p:1,w:"Papai Noel"},{p:1,w:"Coringa"},{p:1,w:"Mônica"},{p:1,w:"Cascão"},{p:1,w:"Cebolinha"},{p:1,w:"Magali"},{p:1,w:"Pica-pau"},
+                {p:2,w:"Homem Aranha"},{p:2,w:"Shrek"},{p:2,w:"Branca de Neve"},{p:2,w:"Chaves"},{p:2,w:"Tarzan"},{p:2,w:"Hulk"},{p:2,w:"Thor"},{p:2,w:"Bob Esponja"},{p:2,w:"Pateta"},{p:2,w:"Pato Donald"},
+                {p:3,w:"Harry Potter"},{p:3,w:"Jack Sparrow"},{p:3,w:"Cinderela"},{p:3,w:"Mulher Maravilha"},{p:3,w:"Flash"},{p:3,w:"Robin Hood"},{p:3,w:"Buzz Lightyear"},{p:3,w:"Barbie"},{p:3,w:"Simba"},{p:3,w:"Zorro"},
+                {p:4,w:"Darth Vader"},{p:4,w:"Sherlock Holmes"},{p:4,w:"Michael Jackson"},{p:4,w:"Homem Ferro"},{p:4,w:"Goku"},{p:4,w:"Naruto"},{p:4,w:"Sonic"},{p:4,w:"Mario"},{p:4,w:"Luigi"},{p:4,w:"Popeye"},
+                {p:5,w:"Chapolin"},{p:5,w:"Pikachu"},{p:5,w:"Mona Lisa"},{p:5,w:"Albert Einstein"},{p:5,w:"Scooby Doo"},{p:5,w:"Tom e Jerry"},{p:5,w:"He-man"},{p:5,w:"She-ra"},{p:5,w:"Stitch"},{p:5,w:"Moana"},
+                {p:6,w:"Charlie Chaplin"},{p:6,w:"Elvis Presley"},{p:6,w:"Homer Simpson"},{p:6,w:"Indiana Jones"},{p:6,w:"Elsa"},{p:6,w:"Yoda"},{p:6,w:"Gandalf"},{p:6,w:"Wolverine"},{p:6,w:"Jack Sparrow"},{p:6,w:"Marilyn Monroe"}
+            ]
+        };
+
+        let teams = [], currentIdx = 0, timer, timeLeft, currentPoints = 0;
+
+        function falar(texto) {
+            const synth = window.speechSynthesis;
+            const utter = new SpeechSynthesisUtterance(texto);
+            utter.lang = 'pt-BR';
+            utter.rate = 1.1;
+            synth.speak(utter);
+        }
+
+        function generateInputs() {
+            const qty = document.getElementById('qtyTeams').value;
+            const container = document.getElementById('team-names-container');
+            container.innerHTML = '';
+            for(let i=1; i<=qty; i++) {
+                container.innerHTML += `<input type="text" class="t-name" value="Time ${String.fromCharCode(64+i)}">`;
+            }
+        }
+        generateInputs();
+
+        function startGame() {
+            const names = document.querySelectorAll('.t-name');
+            teams = Array.from(names).map(n => ({ name: n.value, score: 0 }));
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            renderScoreboard();
+        }
+
+        function renderScoreboard() {
+            const sb = document.getElementById('scoreboard');
+            sb.innerHTML = teams.map((t, i) => `
+                <div class="team-box ${i === currentIdx ? 'active' : ''}">
+                    ${t.name}<br><span style="font-size:1.1rem; font-weight:900;">${t.score}</span>
+                </div>
+            `).join('');
+            const sorted = [...teams].sort((a,b) => b.score - a.score);
+            document.getElementById('ranking').innerText = `🏆 LÍDER: ${sorted[0].name}`;
+        }
+
+        function drawWord() {
+            const cats = Object.keys(database);
+            const cat = cats[Math.floor(Math.random()*cats.length)];
+            const item = database[cat][Math.floor(Math.random()*database[cat].length)];
+            
+            currentPoints = item.p;
+            document.getElementById('cat-display').innerText = cat;
+            document.getElementById('word-display').innerText = item.w;
+            document.getElementById('points-display').innerText = `VALE ${item.p} PONTOS`;
+            document.getElementById('points-display').style.visibility = "visible";
+            
+            falar(`Categoria: ${cat}. Vale ${item.p} pontos.`);
+            
+            document.getElementById('btn-draw').classList.add('hidden');
+            document.getElementById('btn-start-timer').classList.remove('hidden');
+        }
+
+        function startCountdown() {
+            document.getElementById('btn-start-timer').classList.add('hidden');
+            document.getElementById('game-actions').classList.remove('hidden');
+            timeLeft = document.getElementById('gameTime').value;
+            updateTimerUI();
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                updateTimerUI();
+                if(timeLeft <= 0) {
+                    clearInterval(timer);
+                    playSirene();
+                    alert("TEMPO ESGOTADO!");
+                    resolveTurn(false);
+                }
+            }, 1000);
+        }
+
+        function updateTimerUI() {
+            document.getElementById('timer').innerText = timeLeft < 10 ? `0${timeLeft}` : timeLeft;
+        }
+
+        function resolveTurn(success) {
+            clearInterval(timer);
+            if(success) {
+                teams[currentIdx].score += currentPoints;
+                falar("Ponto para o " + teams[currentIdx].name);
+            }
+            currentIdx = (currentIdx + 1) % teams.length;
+            
+            document.getElementById('game-actions').classList.add('hidden');
+            document.getElementById('btn-draw').classList.remove('hidden');
+            document.getElementById('word-display').innerText = "PRÓXIMO!";
+            document.getElementById('cat-display').innerText = "PREPARE-SE";
+            document.getElementById('points-display').style.visibility = "hidden";
+            renderScoreboard();
+        }
+
+        function playSirene() {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, ctx.currentTime);
+            osc.frequency.linearRampToValueAtTime(600, ctx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(); osc.stop(ctx.currentTime + 0.8);
+            setTimeout(() => falar("Tempo esgotado!"), 800);
+        }
+    </script>
+</body>
+</html>
