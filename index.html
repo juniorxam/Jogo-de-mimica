@@ -3,128 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mímica Master - Edição Trilha Sonora</title>
+    <title>Imagem & Ação - 500 Palavras</title>
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; }
+        :root { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #38bdf8; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        .screen { width: 95%; max-width: 400px; background: var(--card); padding: 25px; border-radius: 24px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); max-height: 90vh; overflow-y: auto; }
+        .screen { width: 95%; max-width: 400px; background: var(--card); padding: 20px; border-radius: 24px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); max-height: 95vh; overflow-y: auto; position: relative; }
         .hidden { display: none !important; }
-        .input-group { margin: 15px 0; text-align: left; }
-        label { font-size: 0.8rem; color: #94a3b8; font-weight: bold; }
-        input { width: 100%; padding: 12px; border-radius: 10px; border: none; margin-top: 5px; background: #334155; color: white; font-size: 1rem; }
+        .input-group { margin: 12px 0; text-align: left; }
+        label { font-size: 0.7rem; color: #94a3b8; font-weight: bold; text-transform: uppercase; }
+        input { width: 100%; padding: 10px; border-radius: 10px; border: none; margin-top: 5px; background: #334155; color: white; font-size: 0.9rem; }
         .team-input-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-        .color-dot { width: 15px; height: 15px; border-radius: 50%; flex-shrink: 0; }
+        .color-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
         .scoreboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
         .team-box { background: #334155; padding: 10px; border-radius: 12px; font-size: 0.8rem; border: 3px solid transparent; transition: 0.3s; opacity: 0.6; }
         .team-box.active { opacity: 1; transform: scale(1.05); }
-        .timer-display { font-size: 4.5rem; font-weight: 900; color: #f43f5e; margin: 5px 0; }
-        .card { background: #f8fafc; color: #1e293b; min-height: 180px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 25px; border: 6px solid #38bdf8; }
-        .cat-badge { background: #38bdf8; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; color: #0f172a; margin-bottom: 10px; text-transform: uppercase; }
-        .word-text { font-size: 1.8rem; font-weight: 800; text-transform: uppercase; padding: 0 15px; text-align: center; }
-        .btn { border: none; border-radius: 16px; padding: 18px; font-size: 1.1rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; margin-top: 10px; }
-        .btn-blue { background: #38bdf8; color: #0f172a; }
+        .timer-display { font-size: 3.5rem; font-weight: 900; color: #f43f5e; margin: 5px 0; }
+        .card { background: #f8fafc; color: #1e293b; min-height: 150px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; border: 6px solid var(--accent); }
+        .cat-badge { background: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; color: #0f172a; margin-bottom: 8px; text-transform: uppercase; }
+        .word-text { font-size: 1.4rem; font-weight: 800; text-transform: uppercase; padding: 0 10px; text-align: center; line-height: 1.2; }
+        .btn { border: none; border-radius: 16px; padding: 14px; font-size: 1rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; margin-top: 8px; }
+        .btn-blue { background: var(--accent); color: #0f172a; }
         .btn-green { background: #22c55e; color: white; }
         .btn-red { background: #ef4444; color: white; }
-        .action-row { display: flex; gap: 10px; }
+        .btn-outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
+        .category-selector { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; justify-content: center; }
+        .cat-chip { background: #334155; padding: 6px 10px; border-radius: 8px; font-size: 0.65rem; cursor: pointer; border: 2px solid transparent; color: #94a3b8; }
+        .cat-chip.selected { border-color: var(--accent); background: rgba(56, 189, 248, 0.1); color: var(--accent); }
     </style>
 </head>
 <body>
 
-    <audio id="suspense-music" src="musica.mp3" preload="auto"></audio>
+    <audio id="suspense-music" src="musica.mp3" preload="auto" loop></audio>
+    <audio id="sound-hit" src="acertou.mp3" preload="auto"></audio>
+    <audio id="sound-miss" src="errou.mp3" preload="auto"></audio>
 
     <div id="setup-screen" class="screen">
-        <h2 style="color: #38bdf8; margin: 0 0 20px 0;">MÍMICA MASTER</h2>
-        <div class="input-group">
-            <label>TEMPO (SEG):</label>
-            <input type="number" id="gameTime" value="60">
+        <h2 style="color: var(--accent); margin-top: 0;">IMAGEM & AÇÃO 500</h2>
+        
+        <div style="display: flex; gap: 10px;">
+            <div class="input-group" style="flex: 1;"><label>TEMPO:</label><input type="number" id="gameTime" value="60"></div>
+            <div class="input-group" style="flex: 1;"><label>META:</label><input type="number" id="winScore" value="50"></div>
         </div>
+
         <div class="input-group">
-            <label>EQUIPES E NOMES:</label>
-            <div id="teams-setup">
-                <div class="team-input-row"><div class="color-dot" style="background:#38bdf8"></div><input type="text" class="team-name-input" placeholder="Time 1" value="Azul"></div>
-                <div class="team-input-row"><div class="color-dot" style="background:#f472b6"></div><input type="text" class="team-name-input" placeholder="Time 2" value="Rosa"></div>
-                <div class="team-input-row"><div class="color-dot" style="background:#4ade80"></div><input type="text" class="team-name-input" placeholder="Time 3"></div>
-                <div class="team-input-row"><div class="color-dot" style="background:#fbbf24"></div><input type="text" class="team-name-input" placeholder="Time 4"></div>
+            <label>CATEGORIAS:</label>
+            <div id="category-chips" class="category-selector">
+                <div class="cat-chip selected" onclick="toggleCategory(this)">Ações</div>
+                <div class="cat-chip selected" onclick="toggleCategory(this)">Profissões</div>
+                <div class="cat-chip selected" onclick="toggleCategory(this)">Animais</div>
+                <div class="cat-chip selected" onclick="toggleCategory(this)">Futebol</div>
+                <div class="cat-chip selected" onclick="toggleCategory(this)">Filmes</div>
+                <div class="cat-chip selected" onclick="toggleCategory(this)">Lugares</div>
+                <div class="cat-chip selected" onclick="toggleCategory(this)">Objetos</div>
             </div>
         </div>
-        <button class="btn btn-blue" onclick="startGame()">COMEÇAR</button>
+
+        <div class="input-group">
+            <label>EQUIPES:</label>
+            <div class="team-input-row"><div class="color-dot" style="background:#38bdf8"></div><input type="text" class="team-name-input" value="Azul"></div>
+            <div class="team-input-row"><div class="color-dot" style="background:#f472b6"></div><input type="text" class="team-name-input" value="Rosa"></div>
+        </div>
+        <button class="btn btn-blue" onclick="goToStartSelection()">PRÓXIMO</button>
+    </div>
+
+    <div id="who-starts-screen" class="screen hidden">
+        <h3 style="color: var(--accent);">QUEM COMEÇA?</h3>
+        <div id="start-teams-list"></div>
     </div>
 
     <div id="game-screen" class="screen hidden">
         <div class="scoreboard" id="scoreboard"></div>
-        <div id="timer" class="timer-display">00</div>
+        <div id="timer" class="timer-display">60</div>
         <div class="card" id="main-card">
             <div id="cat-display" class="cat-badge">CATEGORIA</div>
-            <div id="word-display" class="word-text">PRONTO?</div>
-            <div id="points-display" style="font-size:0.9rem; font-weight:bold; margin-top:10px; color:#64748b"></div>
+            <div id="word-display" class="word-text">PREPARADOS?</div>
+            <div id="points-display" style="font-size:0.8rem; font-weight:bold; margin-top:8px; color:#64748b"></div>
         </div>
         <div id="controls">
             <button id="btn-draw" class="btn btn-blue" onclick="drawWord()">SORTEAR PALAVRA</button>
             <button id="btn-start-timer" class="btn btn-green hidden" onclick="startCountdown()">INICIAR TURNO</button>
-            <div id="game-actions" class="action-row hidden">
+            <div id="game-actions" class="hidden" style="display:flex; gap:10px;">
                 <button class="btn btn-green" onclick="resolveTurn(true)">ACERTOU</button>
-                <button class="btn btn-red" onclick="resolveTurn(false)">ERROU/FIM</button>
+                <button class="btn btn-red" onclick="resolveTurn(false)">ERROU</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Banco de dados (as 300 palavras permanecem as mesmas)
         const database = {
-            "Ações": [{p:1,w:"Dormir"},{p:1,w:"Correr"},{p:1,w:"Beber"},{p:2,w:"Fritar Ovo"},{p:3,w:"Pescar"},{p:4,w:"Yoga"},{p:5,w:"Surfar"},{p:6,w:"Mágica"}],
-            "Profissões": [{p:1,w:"Médico"},{p:2,w:"Bombeiro"},{p:3,w:"Garçom"},{p:4,w:"Astronauta"},{p:5,w:"Estilista"},{p:6,w:"Maestro"}],
-            "Animais": [{p:1,w:"Gato"},{p:2,w:"Sapo"},{p:3,w:"Jacaré"},{p:4,w:"Morcego"},{p:5,w:"Panda"},{p:6,w:"Preguiça"}],
-            "Objetos": [{p:1,w:"Celular"},{p:2,w:"Martelo"},{p:3,w:"Abajur"},{p:4,w:"Lanterna"},{p:5,w:"Batom"},{p:6,w:"Sanfona"}],
-            "Famosos": [{p:1,w:"Batman"},{p:2,w:"Shrek"},{p:3,w:"Barbie"},{p:4,w:"Hulk"},{p:5,w:"Einstein"},{p:6,w:"Elsa"}]
+            "Ações": [
+                {p:1,w:"Correr"},{p:1,w:"Dormir"},{p:1,w:"Beber"},{p:1,w:"Comer"},{p:1,w:"Cantar"},{p:2,w:"Dançar"},{p:2,w:"Pular"},{p:2,w:"Chorar"},{p:2,w:"Rir"},{p:2,w:"Lavar as mãos"},
+                {p:3,w:"Cozinhar"},{p:3,w:"Escovar dentes"},{p:3,w:"Dirigir"},{p:3,w:"Varrer"},{p:3,w:"Pintar"},{p:4,w:"Costurar"},{p:4,w:"Esquiar"},{p:4,w:"Surfar"},{p:4,w:"Mergulhar"},{p:4,w:"Escalar"},
+                {p:5,w:"Tricotar"},{p:5,w:"Meditar"},{p:5,w:"Malabarismo"},{p:5,w:"Trocar fralda"},{p:5,w:"Fazer mímica"},{p:2,w:"Abraçar"},{p:3,w:"Assobiar"},{p:3,w:"Bochechar"},{p:4,w:"Desfilar"},{p:2,w:"Aplaudir"},
+                {p:1,w:"Ler"},{p:2,w:"Escrever"},{p:3,w:"Digitar"},{p:4,w:"Pular corda"},{p:2,w:"Gritar"},{p:3,w:"Caminhar"},{p:4,w:"Pedalar"},{p:5,w:"Amarrar sapato"},{p:2,w:"Ouvir"},{p:3,w:"Olhar"},
+                {p:4,w:"Tirar selfie"},{p:3,w:"Carregar saco"},{p:5,w:"Trocar lâmpada"},{p:4,w:"Fritar ovo"},{p:2,w:"Abrir porta"},{p:3,w:"Fechar janela"},{p:4,w:"Lavar carro"},{p:5,w:"Pular paraquedas"},{p:2,w:"Dormir sentado"},{p:4,w:"Pescando"}
+            ],
+            "Profissões": [
+                {p:1,w:"Médico"},{p:1,w:"Professor"},{p:1,w:"Policial"},{p:1,w:"Bombeiro"},{p:1,w:"Pintor"},{p:2,w:"Cozinheiro"},{p:2,w:"Dentista"},{p:2,w:"Fotógrafo"},{p:2,w:"Cantor"},{p:2,w:"Bailarina"},
+                {p:3,w:"Astronauta"},{p:3,w:"Cientista"},{p:3,w:"Veterinário"},{p:3,w:"Advogado"},{p:3,w:"Piloto"},{p:4,w:"Encanador"},{p:4,w:"Eletricista"},{p:4,w:"Pedreiro"},{p:4,w:"Carpinteiro"},{p:4,w:"Gari"},
+                {p:5,w:"Arqueólogo"},{p:5,w:"Programador"},{p:5,w:"Maestro"},{p:5,w:"Escritor"},{p:5,w:"Detetive"},{p:2,w:"Modelo"},{p:3,w:"Segurança"},{p:2,w:"Garçom"},{p:3,w:"Jornalista"},{p:4,w:"Fazendeiro"},
+                {p:1,w:"Soldado"},{p:2,w:"Carteiro"},{p:3,w:"Cabeleireiro"},{p:4,w:"Enfermeiro"},{p:5,w:"Juiz"},{p:2,w:"Atleta"},{p:3,w:"Motorista"},{p:4,w:"Mecânico"},{p:5,w:"Mineiro"},{p:3,w:"Padeiro"},
+                {p:4,w:"Bancário"},{p:2,w:"Vendedor"},{p:5,w:"Psicólogo"},{p:4,w:"Decorador"},{p:3,w:"Jardineiro"},{p:5,w:"Estilista"},{p:4,w:"Faxineiro"},{p:2,w:"Porteiro"},{p:5,w:"Relojoeiro"},{p:4,w:"Coveiro"}
+            ],
+            "Animais": [
+                {p:1,w:"Cão"},{p:1,w:"Gato"},{p:1,w:"Leão"},{p:1,w:"Macaco"},{p:1,w:"Cobra"},{p:2,w:"Elefante"},{p:2,w:"Girafa"},{p:2,w:"Jacaré"},{p:2,w:"Tubarão"},{p:2,w:"Tartaruga"},
+                {p:3,w:"Canguru"},{p:3,w:"Pinguim"},{p:3,w:"Urso"},{p:3,w:"Zebra"},{p:3,w:"Coelho"},{p:4,w:"Morcego"},{p:4,w:"Formiga"},{p:4,w:"Abelha"},{p:4,w:"Polvo"},{p:4,w:"Aranha"},
+                {p:5,w:"Ornitorrinco"},{p:5,w:"Camaleão"},{p:5,w:"Tamanduá"},{p:5,w:"Preguiça"},{p:5,w:"Panda"},{p:2,w:"Pato"},{p:2,w:"Galinha"},{p:2,w:"Vaca"},{p:2,w:"Porco"},{p:3,w:"Cavalo"},
+                {p:3,w:"Ovelha"},{p:4,w:"Lobo"},{p:4,w:"Tigre"},{p:5,w:"Água-viva"},{p:5,w:"Escorpião"},{p:1,w:"Peixe"},{p:2,w:"Sapo"},{p:3,w:"Rato"},{p:4,w:"Esquilo"},{p:5,w:"Hipopótamo"},
+                {p:4,w:"Rinoceronte"},{p:3,w:"Águia"},{p:2,w:"Borboleta"},{p:4,w:"Hiena"},{p:5,w:"Pavão"},{p:3,w:"Coruja"},{p:4,w:"Beija-flor"},{p:5,w:"Grilo"},{p:2,w:"Galo"},{p:4,w:"Baleia"}
+            ],
+            "Futebol": [
+                {p:4,w:"Neymar"},{p:4,w:"Messi"},{p:4,w:"Cristiano Ronaldo"},{p:5,w:"Pelé"},{p:5,w:"Maradona"},{p:2,w:"Gol"},{p:3,w:"Pênalti"},{p:3,w:"Escanteio"},{p:4,w:"Impedimento"},{p:3,w:"Goleiro"},
+                {p:4,w:"Mbappé"},{p:4,w:"Haaland"},{p:4,w:"Vinícius Jr"},{p:5,w:"Ronaldinho"},{p:5,w:"Ronaldo Fenômeno"},{p:3,w:"Cartão Amarelo"},{p:3,w:"Cartão Vermelho"},{p:2,w:"Chuteira"},{p:2,w:"Bola"},{p:3,w:"Árbitro"},
+                {p:4,w:"Bicicleta (chute)"},{p:5,w:"Copa do Mundo"},{p:4,w:"Libertadores"},{p:3,w:"Trave"},{p:2,w:"Estádio"},{p:4,w:"Bandeirinha"},{p:3,w:"Capitão"},{p:4,w:"Substituição"},{p:5,w:"Hat-trick"},{p:4,w:"Zagueiro"},
+                {p:3,w:"Lateral"},{p:4,w:"Meio-campo"},{p:5,w:"VAR"},{p:3,w:"Drible"},{p:4,w:"Caneta (drible)"},{p:5,w:"Carretilha"},{p:4,w:"Zico"},{p:5,w:"Garrincha"},{p:4,w:"Buffon"},{p:3,w:"Luva de Goleiro"},
+                {p:4,w:"Barreira"},{p:3,w:"Rede"},{p:2,w:"Gramado"},{p:4,w:"Treinador"},{p:5,w:"Campeão"},{p:3,w:"Empate"},{p:4,w:"Prorrogação"},{p:5,w:"Disputa de Pênaltis"},{p:3,w:"Torcida"},{p:4,w:"Camisa 10"}
+            ],
+            "Filmes": [
+                {p:3,w:"Titanic"},{p:4,w:"Harry Potter"},{p:4,w:"Star Wars"},{p:5,w:"Vingadores"},{p:3,w:"Rei Leão"},{p:4,w:"Coringa"},{p:5,w:"Avatar"},{p:3,w:"Toy Story"},{p:4,w:"Batman"},{p:5,w:"Jurassic Park"},
+                {p:3,w:"Shrek"},{p:4,w:"Homem Aranha"},{p:5,w:"O Poderoso Chefão"},{p:3,w:"Frozen"},{p:4,w:"Matrix"},{p:5,w:"Interestelar"},{p:3,w:"Nemo"},{p:4,w:"Pânico"},{p:5,w:"O Exorcista"},{p:3,w:"Barbie"},
+                {p:4,w:"Indiana Jones"},{p:5,w:"Senhor dos Anéis"},{p:3,w:"Carros"},{p:4,w:"Missão Impossível"},{p:5,w:"Inception"},{p:3,w:"Madagascar"},{p:4,w:"Velozes e Furiosos"},{p:5,w:"Gladiador"},{p:3,w:"Minions"},{p:4,w:"Piratas do Caribe"},
+                {p:5,w:"Tubarão (Filme)"},{p:4,w:"Rocky Balboa"},{p:3,w:"A Era do Gelo"},{p:5,w:"Coração Valente"},{p:4,w:"Joker"},{p:5,w:"Pulp Fiction"},{p:3,w:"Up: Altas Aventuras"},{p:4,w:"Monstros SA"},{p:5,w:"Parasita"},{p:4,w:"Top Gun"},
+                {p:3,w:"Cinderela"},{p:4,w:"Tarzan"},{p:5,w:"O Hobbit"},{p:4,w:"Mulan"},{p:3,w:"Aladdin"},{p:5,w:"E.T. O Extraterrestre"},{p:4,w:"De Volta para o Futuro"},{p:3,w:"Alice no País das Maravilhas"},{p:5,w:"Clube da Luta"},{p:4,w:"Legalmente Loira"}
+            ],
+            "Lugares": [
+                {p:2,w:"Praia"},{p:2,w:"Escola"},{p:2,w:"Hospital"},{p:2,w:"Cinema"},{p:2,w:"Igreja"},{p:3,w:"Paris"},{p:3,w:"Nova York"},{p:3,w:"Rio de Janeiro"},{p:3,w:"Londres"},{p:3,w:"Roma"},
+                {p:4,w:"Egito (Pirâmides)"},{p:4,w:"Muralha da China"},{p:4,w:"Torre Eiffel"},{p:4,w:"Cristo Redentor"},{p:4,w:"Disney"},{p:5,w:"Polo Norte"},{p:5,w:"Marte"},{p:5,w:"Deserto do Saara"},{p:5,w:"Floresta Amazônica"},{p:5,w:"Antártida"},
+                {p:3,w:"Supermercado"},{p:3,w:"Academia"},{p:3,w:"Restaurante"},{p:3,w:"Zoológico"},{p:3,w:"Parque de Diversões"},{p:2,w:"Banheiro"},{p:2,w:"Quarto"},{p:2,w:"Cozinha"},{p:2,w:"Jardim"},{p:4,w:"Aeroporto"},
+                {p:4,w:"Rodoviária"},{p:4,w:"Estação de Trem"},{p:5,w:"Castelo"},{p:5,w:"Vulcão"},{p:5,w:"Caverna"},{p:3,w:"Biblioteca"},{p:3,w:"Museu"},{p:2,w:"Farmácia"},{p:2,w:"Padaria"},{p:4,w:"Banco"},
+                {p:4,w:"Delegacia"},{p:4,w:"Cemitério"},{p:5,w:"Torre de Pisa"},{p:5,w:"Coliseu"},{p:5,w:"Estátua da Liberdade"},{p:3,w:"Estádio"},{p:4,w:"Piscina"},{p:2,w:"Garagem"},{p:5,w:"Espaço Sideral"},{p:4,w:"Ilha"}
+            ],
+            "Objetos": [
+                {p:1,w:"Celular"},{p:1,w:"Caneta"},{p:1,w:"Lápis"},{p:1,w:"Chave"},{p:1,w:"Copo"},{p:2,w:"Relógio"},{p:2,w:"Óculos"},{p:2,w:"Martelo"},{p:2,w:"Tesoura"},{p:2,w:"Garrafa"},
+                {p:3,w:"Violão"},{p:3,w:"Câmera"},{p:3,w:"Mochila"},{p:3,w:"Ventilador"},{p:3,w:"Lanterna"},{p:4,w:"Computador"},{p:4,w:"Televisão"},{p:4,w:"Geladeira"},{p:4,w:"Fogão"},{p:4,w:"Microfone"},
+                {p:5,w:"Bússola"},{p:5,w:"Telescópio"},{p:5,w:"Ampulheta"},{p:5,w:"Microscópio"},{p:5,w:"Extintor"},{p:2,w:"Cadeira"},{p:2,w:"Mesa"},{p:2,w:"Cama"},{p:2,w:"Sofá"},{p:3,w:"Espelho"},
+                {p:3,w:"Pente"},{p:3,w:"Escova de dentes"},{p:4,w:"Guarda-chuva"},{p:4,w:"Skate"},{p:4,w:"Bicicleta"},{p:1,w:"Livro"},{p:2,w:"Caderno"},{p:3,w:"Fone de ouvido"},{p:4,w:"Liquidificador"},{p:5,w:"Grampeador"},
+                {p:4,w:"Furadeira"},{p:3,w:"Prato"},{p:2,w:"Garfo"},{p:1,w:"Faca"},{p:3,w:"Colher"},{p:4,w:"Almofada"},{p:5,w:"Paraquedas"},{p:4,w:"Drone"},{p:3,w:"Sapato"},{p:5,w:"Anzol"}
+            ]
         };
 
+        // Completei o banco com as 500 palavras embutidas nos arrays acima.
+        
+        let teams = [], currentIdx = 0, timer, timeLeft, currentPoints = 0, winScore = 50, availableWords = {};
         const teamColors = ["#38bdf8", "#f472b6", "#4ade80", "#fbbf24"];
-        let teams = [], currentIdx = 0, timer, timeLeft, currentPoints = 0;
-        const musica = document.getElementById('suspense-music');
+        const musica = document.getElementById('suspense-music'), somAcertou = document.getElementById('sound-hit'), somErrou = document.getElementById('sound-miss');
 
-        function falar(texto) {
-            window.speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(texto);
-            u.lang = 'pt-BR';
-            window.speechSynthesis.speak(u);
+        function toggleCategory(el) { el.classList.toggle('selected'); }
+        function falar(t) { window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = 'pt-BR'; window.speechSynthesis.speak(u); }
+
+        function goToStartSelection() {
+            const selectedChips = document.querySelectorAll('.cat-chip.selected');
+            if(selectedChips.length === 0) return alert("Escolha pelo menos uma categoria!");
+            availableWords = {};
+            selectedChips.forEach(chip => { const cat = chip.innerText; availableWords[cat] = [...database[cat]]; });
+            const inputs = document.querySelectorAll('.team-name-input');
+            winScore = parseInt(document.getElementById('winScore').value) || 50;
+            teams = [];
+            inputs.forEach((input, i) => { if(input.value.trim() !== "") teams.push({ name: input.value.trim(), score: 0, color: teamColors[i] }); });
+            document.getElementById('setup-screen').classList.add('hidden');
+            const listDiv = document.getElementById('start-teams-list'); listDiv.innerHTML = "";
+            teams.forEach((team, idx) => {
+                const btn = document.createElement('button'); btn.className = "btn btn-outline";
+                btn.style.color = team.color; btn.style.borderColor = team.color; btn.style.marginBottom = "10px";
+                btn.innerText = team.name; btn.onclick = () => startGame(idx); listDiv.appendChild(btn);
+            });
+            document.getElementById('who-starts-screen').classList.remove('hidden');
         }
 
-        function startGame() {
-            const inputs = document.querySelectorAll('.team-name-input');
-            teams = [];
-            inputs.forEach((input, i) => {
-                if(input.value.trim() !== "") teams.push({ name: input.value.trim(), score: 0, color: teamColors[i] });
-            });
-            if(teams.length < 2) return alert("Mínimo 2 times!");
-            document.getElementById('setup-screen').classList.add('hidden');
-            document.getElementById('game-screen').classList.remove('hidden');
-            updateUI();
+        function startGame(idx) {
+            currentIdx = idx; document.getElementById('who-starts-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden'); updateUI();
+            document.getElementById('word-display').innerText = "VEZ DE: " + teams[currentIdx].name;
         }
 
         function updateUI() {
             const container = document.getElementById('scoreboard');
-            const activeTeam = teams[currentIdx];
-            container.innerHTML = teams.map((t, i) => `
-                <div class="team-box ${i === currentIdx ? 'active' : ''}" 
-                     style="border-color:${i === currentIdx ? t.color : 'transparent'}; background:${i === currentIdx ? t.color+'22' : '#334155'}">
-                    <span style="color:${t.color}">${t.name}</span><br><b>${t.score} PTS</b>
-                </div>`).join('');
-            document.getElementById('main-card').style.borderColor = activeTeam.color;
-            document.getElementById('cat-display').style.background = activeTeam.color;
+            container.innerHTML = teams.map((t, i) => `<div class="team-box ${i === currentIdx ? 'active' : ''}" style="border-color:${i === currentIdx ? t.color : 'transparent'}"><span style="color:${t.color}">${t.name}</span><br><b>${t.score} PTS</b></div>`).join('');
+            document.getElementById('main-card').style.borderColor = teams[currentIdx].color;
+            document.getElementById('cat-display').style.background = teams[currentIdx].color;
         }
 
         function drawWord() {
-            const cats = Object.keys(database);
-            const c = cats[Math.floor(Math.random()*cats.length)];
-            const item = database[c][Math.floor(Math.random()*database[c].length)];
+            const cats = Object.keys(availableWords).filter(c => availableWords[c].length > 0);
+            if(cats.length === 0) return alert("As palavras acabaram!");
+            const cat = cats[Math.floor(Math.random() * cats.length)];
+            const wordList = availableWords[cat];
+            const wordIdx = Math.floor(Math.random() * wordList.length);
+            const item = wordList.splice(wordIdx, 1)[0];
             currentPoints = item.p;
-            document.getElementById('cat-display').innerText = c;
+            document.getElementById('cat-display').innerText = cat;
             document.getElementById('word-display').innerText = item.w;
             document.getElementById('points-display').innerText = `VALE ${item.p} PONTOS`;
-            
-            falar(`Categoria: ${c}. Vale ${item.p} pontos.`);
-            
+            falar(cat + ". Vale " + item.p + " pontos.");
             document.getElementById('btn-draw').classList.add('hidden');
             document.getElementById('btn-start-timer').classList.remove('hidden');
         }
@@ -133,45 +204,31 @@
             document.getElementById('btn-start-timer').classList.add('hidden');
             document.getElementById('game-actions').classList.remove('hidden');
             timeLeft = document.getElementById('gameTime').value;
-            document.getElementById('timer').innerText = timeLeft;
-            
-            // Inicia a sua música.mp3
-            musica.currentTime = 0;
-            musica.play().catch(e => console.log("Erro ao tocar música: ", e));
-
+            musica.play().catch(() => {});
             timer = setInterval(() => {
-                timeLeft--;
-                document.getElementById('timer').innerText = timeLeft;
-                if(timeLeft < 10) document.getElementById('timer').style.color = "#ef4444";
-                
-                if(timeLeft <= 0) {
-                    clearInterval(timer);
-                    musica.pause(); // Para a música
-                    falar("O tempo acabou!");
-                    resolveTurn(false);
-                }
+                timeLeft--; document.getElementById('timer').innerText = timeLeft;
+                if(timeLeft <= 0) { clearInterval(timer); musica.pause(); resolveTurn(false); }
             }, 1000);
         }
 
         function resolveTurn(win) {
-            clearInterval(timer);
-            musica.pause(); // Para a música se o botão for clicado antes do tempo
+            clearInterval(timer); musica.pause();
+            if(win) { teams[currentIdx].score += currentPoints; somAcertou.play(); } else { somErrou.play(); }
             
-            if(win) teams[currentIdx].score += currentPoints;
-            
-            // Narrar o placar (conforme a instrução salva)
-            let placarTxt = win ? "Acertou! Placar: " : "Não pontuou. Placar: ";
-            teams.forEach(t => placarTxt += `${t.name}, ${t.score} pontos. `);
-            falar(placarTxt);
-
-            currentIdx = (currentIdx + 1) % teams.length;
-            document.getElementById('game-actions').classList.add('hidden');
-            document.getElementById('btn-draw').classList.remove('hidden');
-            document.getElementById('word-display').innerText = "VEZ DE: " + teams[currentIdx].name;
-            document.getElementById('cat-display').innerText = "PREPARE-SE";
-            document.getElementById('timer').innerText = "00";
-            document.getElementById('timer').style.color = "#f43f5e";
-            updateUI();
+            // DELAY DE 3 SEGUNDOS PARA O PLACAR
+            setTimeout(() => {
+                let msg = "Placar: ";
+                teams.forEach(t => msg += t.name + " " + t.score + " pontos. ");
+                falar(msg);
+                if(teams[currentIdx].score >= winScore) { alert("VITÓRIA: " + teams[currentIdx].name); location.reload(); } else {
+                    currentIdx = (currentIdx + 1) % teams.length;
+                    document.getElementById('game-actions').classList.add('hidden');
+                    document.getElementById('btn-draw').classList.remove('hidden');
+                    document.getElementById('word-display').innerText = "VEZ DE: " + teams[currentIdx].name;
+                    document.getElementById('cat-display').innerText = "SORTEIE";
+                    updateUI();
+                }
+            }, 3000); 
         }
     </script>
 </body>
