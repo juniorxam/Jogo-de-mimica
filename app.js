@@ -7,11 +7,43 @@ function storageError(){$('storage-warning').hidden=false;}
 try{const raw=localStorage.getItem(KEY);if(raw)game=M.restore(raw);}catch(e){try{localStorage.removeItem(KEY);}catch(ignore){}$('storage-warning').hidden=false;$('storage-warning').textContent='Não foi possível recuperar a partida anterior. Você pode começar uma nova.';}
 try{Object.assign(audio,JSON.parse(localStorage.getItem(AUDIO_KEY)||'{}'));}catch(e){}
 function save(){if(!game)return;try{localStorage.setItem(KEY,JSON.stringify(game));}catch(e){storageError();}}
-function stopAudio(){ $('music-audio').pause(); for(const id of ['hit-audio','miss-audio']){$(id).pause();$(id).currentTime=0;}if(window.speechSynthesis)window.speechSynthesis.cancel();}
-function playSound(id){if(!audio.effects)return;const el=$(id);el.currentTime=0;el.play().catch(()=>{});}
+// One foreground audio channel: effects finish before the scoreboard voice.
+let activeEffect=null, pendingSpeech='', effectGeneration=0, effectCleanup=null;
+function stopAudio(){
+ pendingSpeech='';activeEffect=null;effectGeneration++;if(effectCleanup){effectCleanup();effectCleanup=null;}
+ $('music-audio').pause();
+ for(const id of ['hit-audio','miss-audio']){$(id).pause();$(id).currentTime=0;}
+ if(window.speechSynthesis)window.speechSynthesis.cancel();
+}
+function playSound(id){
+ if(!audio.effects)return;
+ const el=$(id);
+ // Consecutive correct answers still score, but do not restart a playing sound.
+ if(activeEffect===el&&!el.ended)return;
+ const generation=++effectGeneration;
+ if(effectCleanup){effectCleanup();effectCleanup=null;}
+ if(activeEffect){activeEffect.pause();activeEffect.currentTime=0;}
+ pendingSpeech='';
+ if(window.speechSynthesis)window.speechSynthesis.cancel();
+ activeEffect=el;el.currentTime=0;
+ const complete=()=>{
+  el.removeEventListener('ended',complete);el.removeEventListener('error',complete);
+  if(generation!==effectGeneration)return;
+  activeEffect=null;effectCleanup=null;
+  const text=pendingSpeech;pendingSpeech='';
+  if(text)speak(text);
+ };
+ effectCleanup=()=>{el.removeEventListener('ended',complete);el.removeEventListener('error',complete);};
+ el.addEventListener('ended',complete);el.addEventListener('error',complete);
+ try{el.play().catch(complete);}catch(e){complete();}
+}
 function music(){if(game?.phase==='running'&&view==='play'&&audio.music){$('music-audio').volume=.2;$('music-audio').play().catch(()=>{});}else $('music-audio').pause();}
-function beep(){if(!audio.effects)return;try{audioContext=audioContext||new(window.AudioContext||window.webkitAudioContext)();if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});const oscillator=audioContext.createOscillator(),gain=audioContext.createGain();oscillator.connect(gain);gain.connect(audioContext.destination);oscillator.frequency.value=850;gain.gain.setValueAtTime(.07,audioContext.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+.12);oscillator.start();oscillator.stop(audioContext.currentTime+.13);}catch(e){}}
-function speak(text){if(!audio.voice||!window.speechSynthesis||!window.SpeechSynthesisUtterance)return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='pt-BR';window.speechSynthesis.speak(u);}
+function beep(){if(!audio.effects||activeEffect||window.speechSynthesis?.speaking)return;try{audioContext=audioContext||new(window.AudioContext||window.webkitAudioContext)();if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});const oscillator=audioContext.createOscillator(),gain=audioContext.createGain();oscillator.connect(gain);gain.connect(audioContext.destination);oscillator.frequency.value=850;gain.gain.setValueAtTime(.07,audioContext.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+.12);oscillator.start();oscillator.stop(audioContext.currentTime+.13);}catch(e){}}
+function speak(text){
+ if(!audio.voice||!window.speechSynthesis||!window.SpeechSynthesisUtterance)return;
+ if(activeEffect){pendingSpeech=text;return;}
+ window.speechSynthesis.cancel();const u=new window.SpeechSynthesisUtterance(text);u.lang='pt-BR';window.speechSynthesis.speak(u);
+}
 function show(id){view=id;document.querySelectorAll('.view').forEach(el=>el.hidden=el.id!==id);$('continue').hidden=!game;$('continue').textContent=game?.phase==='finished'?'Ver resultado da partida':'Continuar partida';music();window.scrollTo({top:0,behavior:'instant'});}
 function home(){if(game?.phase==='running')act('pause');stopAudio();save();show('home');}
 function buildTeams(){
@@ -49,14 +81,15 @@ function act(action){
  }
  const changed=M.step(game,action,now);
  if(!changed)return;
- if(action==='hit')playSound('hit-audio');if(action==='pass')playSound('miss-audio');
+ if(['next','pause','begin','resume'].includes(action))stopAudio();
  save();render();
+ if(action==='hit')playSound('hit-audio');if(action==='pass')playSound('miss-audio');
  if(game.phase==='summary'||game.phase==='finished')speak('Placar. '+game.teams.map(t=>t.name+': '+t.score+' pontos').join('. '));
 }
 function expire(){
  if(!game||game.phase!=='running')return;
  remember();undo[undo.length-1].remaining=1000;
- M.step(game,'tick',Date.now());playSound('miss-audio');save();render();
+ M.step(game,'tick',Date.now());save();render();playSound('miss-audio');
  speak('Tempo esgotado. Placar. '+game.teams.map(t=>t.name+': '+t.score+' pontos').join('. '));
 }
 function undoResult(){
@@ -129,7 +162,7 @@ document.addEventListener('click',e=>{
 $('home-link').addEventListener('click',home);
 for(const key of ['music','effects','voice']){
  $(key).checked=!!audio[key];$(key).addEventListener('change',()=>{
- audio[key]=$(key).checked;if(key==='voice'&&!audio.voice&&window.speechSynthesis)window.speechSynthesis.cancel();if(key==='effects'&&!audio.effects){for(const id of ['hit-audio','miss-audio'])$(id).pause();}
+ audio[key]=$(key).checked;if(key==='voice'&&!audio.voice){pendingSpeech='';if(window.speechSynthesis)window.speechSynthesis.cancel();}if(key==='effects'&&!audio.effects){activeEffect=null;effectGeneration++;if(effectCleanup){effectCleanup();effectCleanup=null;}for(const id of ['hit-audio','miss-audio'])$(id).pause();const text=pendingSpeech;pendingSpeech='';if(text)speak(text);}
  try{localStorage.setItem(AUDIO_KEY,JSON.stringify(audio));}catch(e){}music();
  });
 }
